@@ -1,9 +1,12 @@
 import os
 import logging
+import httpx
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from groq import Groq, APIError
 from dotenv import load_dotenv
+from groq import Groq, APIError
+
 
 # .env 파일에서 환경 변수 로드
 load_dotenv()
@@ -27,7 +30,12 @@ try:
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
         raise ValueError("GROQ_API_KEY environment variable not set.")
-    groq_client = Groq(api_key=api_key)
+    # httpx.Client를 직접 생성하여 전달하면 시스템이 자동으로 주입하려는 
+    # proxies 설정을 무시하고 깨끗한 상태로 초기화할 수 있습니다.
+    groq_client = Groq(
+        api_key=api_key,
+        http_client=httpx.Client() 
+    )
     logging.info("Groq client initialized successfully.")
 except ValueError as e:
     logging.error(f"Configuration Error: {e}")
