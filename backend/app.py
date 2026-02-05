@@ -1,83 +1,52 @@
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from dotenv import load_dotenv
 from groq import Groq
+from dotenv import load_dotenv
 
-# 환경 변수 로드
+# .env 파일에서 환경 변수 로드
 load_dotenv()
 
 app = Flask(__name__)
-# CORS 설정: 프론트엔드에서의 접근 허용
-CORS(app)
+# 프론트엔드からの 모든 출처에서의 요청을 허용
+CORS(app) 
 
 # Groq 클라이언트 초기화
-api_key = os.getenv("GROQ_API_KEY")
-client = None
-
-if api_key and api_key != "your_groq_api_key_here":
-    try:
-        client = Groq(api_key=api_key)
-        print("✅ Groq Client initialized successfully.")
-    except Exception as e:
-        print(f"❌ Failed to initialize Groq Client: {e}")
-else:
-    print("⚠️ GROQ_API_KEY is not set or invalid. Please check .env file.")
-
-@app.route('/health', methods=['GET'])
-def health_check():
-    """서버 상태 확인용 엔드포인트"""
-    return jsonify({
-        "status": "ok",
-        "message": "BizTone Converter Backend is running",
-        "groq_client_ready": client is not None
-    })
+# API 키는 환경 변수 'GROQ_API_KEY'에서 자동으로 로드됩니다.
+try:
+    groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+    print("Groq client initialized successfully.")
+except Exception as e:
+    groq_client = None
+    print(f"Error initializing Groq client: {e}")
 
 @app.route('/api/convert', methods=['POST'])
 def convert_text():
     """
-    말투 변환 API 엔드포인트 (1단계: 초기 연동)
+    텍스트 변환을 위한 API 엔드포인트.
+    Sprint 1에서는 실제 변환 로직 대신 더미 데이터를 반환합니다.
     """
     data = request.json
+    original_text = data.get('text')
+    target = data.get('target')
+
+    if not original_text or not target:
+        return jsonify({"error": "텍스트와 변환 대상은 필수입니다."}), 400
+
+    # Sprint 1: 실제 Groq API 호출 대신 더미 응답 반환
+    dummy_response = f"'{original_text}'를 '{target}'에게 보내는 말투로 변환한 결과입니다. (이것은 더미 응답입니다.)"
     
-    if not data or 'text' not in data or 'target' not in data:
-        return jsonify({"error": "Invalid input. 'text' and 'target' are required."}), 400
-
-    original_text = data['text']
-    target_role = data['target'] # boss, colleague, customer
-
-    # 1단계 목표: Groq AI API 연동 초기 구현 (간단한 테스트 연동)
-    # 실제 프롬프트 엔지니어링 및 정교한 로직은 Sprint 3에서 구현 예정
+    response_data = {
+        "original_text": original_text,
+        "converted_text": dummy_response,
+        "target": target
+    }
     
-    if client:
-        try:
-            # 간단한 테스트용 호출
-            chat_completion = client.chat.completions.create(
-                messages=[
-                    {
-                        "role": "system",
-                        "content": f"Convert the following text to a professional tone suitable for a {target_role}. Keep the language Korean."
-                    },
-                    {
-                        "role": "user",
-                        "content": original_text,
-                    }
-                ],
-                model="llama3-8b-8192", # Groq에서 지원하는 모델 예시
-            )
-            converted_text = chat_completion.choices[0].message.content
-        except Exception as e:
-            print(f"Groq API Error: {e}")
-            return jsonify({"error": "Failed to process with AI", "details": str(e)}), 500
-    else:
-        # API 키가 설정되지 않았을 때의 더미 응답 (개발 테스트용)
-        converted_text = f"[TEST MODE] ({target_role}에게): {original_text} (API Key 미설정으로 인한 더미 응답입니다)"
+    return jsonify(response_data)
 
-    return jsonify({
-        "original": original_text,
-        "converted": converted_text,
-        "target": target_role
-    })
+@app.route('/')
+def index():
+    return "BizTone Converter 백엔드 서버가 실행 중입니다."
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
