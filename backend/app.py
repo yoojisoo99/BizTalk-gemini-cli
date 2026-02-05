@@ -76,6 +76,10 @@ def convert_text():
         logging.warning("Bad request: 'text' or 'target' is missing.")
         return jsonify({"error": "텍스트와 변환 대상은 필수입니다."}), 400
 
+    if len(original_text) > 500:
+        logging.warning("Bad request: Input text exceeds maximum length of 500 characters.")
+        return jsonify({"error": "입력 텍스트는 500자를 초과할 수 없습니다."}), 400
+
     if target not in PROMPT_TEMPLATES:
         logging.warning(f"Bad request: Invalid target '{target}' provided.")
         return jsonify({"error": "유효하지 않은 변환 대상입니다."}), 400
@@ -91,7 +95,7 @@ def convert_text():
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
-            model="meta-llama/llama-4-scout-17b-16e-instruct", # PRD에 명시된 모델 사용
+            model="moonshotai/kimi-k2-instruct-0905", # PRD에 명시된 모델 사용
             temperature=0.7, # 창의성 조절
             max_tokens=500, # 최대 응답 길이 제한
         )
