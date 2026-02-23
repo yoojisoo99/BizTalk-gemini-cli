@@ -25,14 +25,14 @@ CORS(app)
 
 # Groq 클라이언트 초기화
 # API 키는 환경 변수 'GROQ_API_KEY'에서 자동으로 로드됩니다.
-groq_client = None
+groq_model = None
 try:
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
         raise ValueError("GROQ_API_KEY environment variable not set.")
     # httpx.Client를 직접 생성하여 전달하면 시스템이 자동으로 주입하려는 
     # proxies 설정을 무시하고 깨끗한 상태로 초기화할 수 있습니다.
-    groq_client = Groq(
+    groq_model = Groq(
         api_key=api_key,
         http_client=httpx.Client() 
     )
@@ -64,7 +64,7 @@ def convert_text():
     텍스트 변환을 위한 API 엔드포인트.
     사용자 입력 텍스트를 선택된 대상에 맞춰 Groq AI API를 통해 변환합니다.
     """
-    if groq_client is None:
+    if groq_model is None:
         logging.error("Groq client is not initialized. Cannot process request.")
         return jsonify({"error": "서비스 준비 중입니다. 잠시 후 다시 시도해주세요."}), 503
 
@@ -90,7 +90,7 @@ def convert_text():
 
     try:
         logging.info(f"Attempting to convert text for target: {target}")
-        chat_completion = groq_client.chat.completions.create(
+        chat_completion = groq_model.chat.completions.create(
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
