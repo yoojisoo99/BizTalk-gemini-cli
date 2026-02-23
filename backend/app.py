@@ -27,16 +27,16 @@ CORS(app)
 # API 키는 환경 변수 'GROQ_API_KEY'에서 자동으로 로드됩니다.
 groq_model = None
 try:
-    api_key = os.environ.get("GROQ_API_KEY")
-    if not api_key:
+    GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+    if not GROQ_API_KEY:
         raise ValueError("GROQ_API_KEY environment variable not set.")
     # httpx.Client를 직접 생성하여 전달하면 시스템이 자동으로 주입하려는 
     # proxies 설정을 무시하고 깨끗한 상태로 초기화할 수 있습니다.
     groq_model = Groq(
-        api_key=api_key,
+        api_key=GROQ_API_KEY,
         http_client=httpx.Client() 
     )
-    logging.info("Groq client initialized successfully.")
+    logging.info("Groq Model initialized successfully.")
 except ValueError as e:
     logging.error(f"Configuration Error: {e}")
 except Exception as e:
